@@ -22,8 +22,11 @@ router.post("/", async (req, res) => {
         parts: [
           {
             text:
-              "Do NOT show chain-of-thought. Correct the grammar, punctuation, verb tense, and sentence structure where needed. " +
-              "Keep the original meaning. Return ONLY the corrected text (no explanations)."
+                 "You are a precise grammar correction system."+
+                 "Correct grammar, punctuation, verb tense, clarity, and sentence structure while preserving the original meaning."+
+                 "Do NOT add new ideas or remove information. "+
+                 "Do NOT show reasoning. "+
+                 "Return ONLY the corrected text with no explanations."
           },
           { text }
         ]
@@ -31,7 +34,7 @@ router.post("/", async (req, res) => {
     ];
 
     const data = await callGemini(undefined, contents, {
-      maxOutputTokens: 256,
+      maxOutputTokens: 512,
       temperature: 0.0,
       candidateCount: 1
     });

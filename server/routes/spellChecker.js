@@ -22,9 +22,11 @@ router.post("/", async (req, res) => {
         parts: [
           {
             text:
-              "Do NOT show chain-of-thought. Correct ONLY spelling mistakes in the following text. " +
-              "Do not change grammar, punctuation, or wording unless it's absolutely necessary to correct a spelling error. " +
-              "Return ONLY the corrected text (no explanations)."
+              "You are a strict spell-checking system. "+
+              "Correct only spelling mistakes in the provided text. "+
+              "Do NOT change grammar, punctuation, word choice, style, or sentence structure. "+
+              "Do NOT add or remove any extra words. "+
+              "Return ONLY the corrected text with no explanations."
           },
           { text }
         ]
@@ -32,7 +34,7 @@ router.post("/", async (req, res) => {
     ];
 
     const data = await callGemini(undefined, contents, {
-      maxOutputTokens: 256,
+      maxOutputTokens: 512,
       temperature: 0.0,
       candidateCount: 1
     });
