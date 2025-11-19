@@ -10,14 +10,16 @@ try {
   usePrivy = null;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || "https://ai-writing-assistant-2.onrender.com";
+const API_BASE =
+  import.meta.env.VITE_API_URL || "https://ai-writing-assistant-2.onrender.com";
 
-// character limit
 const MAX_CHARS = 20;
 
 const Editor = () => {
   const privy = usePrivy ? usePrivy() : null;
-  const getAccessToken = privy?.getAccessToken ? privy.getAccessToken : async () => "";
+  const getAccessToken = privy?.getAccessToken
+    ? privy.getAccessToken
+    : async () => "";
 
   const [text, setText] = useState("");
   const [correctedSentences, setCorrectedSentences] = useState([]);
@@ -26,15 +28,21 @@ const Editor = () => {
   const [loading, setLoading] = useState({ spell: false, grammar: false });
   const [error, setError] = useState(null);
 
-  // 🔴 Character limit validation
+  // ------------------------------
+  // Handle Text Change + Length Check
+  // ------------------------------
   const handleTextChange = (e) => {
     const value = e.target.value;
 
-    if (value.length <= MAX_CHARS) {
-      setText(value);
-      setError(null);
-    } else {
-      setError(`Maximum ${MAX_CHARS} characters allowed`);
+    // allow typing any length — Soft Limit
+    setText(value);
+
+    // reset backend errors
+    setError(null);
+
+    // character limit error
+    if (value.length > MAX_CHARS) {
+      setError(`Maximum ${MAX_CHARS} characters allowed.`);
     }
   };
 
@@ -43,7 +51,9 @@ const Editor = () => {
     setCorrectedSentences((prev) => [sentence, ...prev]);
   };
 
+  // ------------------------------
   // SPELL CHECK
+  // ------------------------------
   const checkSpelling = async () => {
     setError(null);
 
@@ -51,12 +61,14 @@ const Editor = () => {
       setError("Enter text to check spelling.");
       return;
     }
+
     if (text.length > MAX_CHARS) {
-      setError(`Input too long. Maximum ${MAX_CHARS} characters allowed.`);
+      setError(`Limit exceeded! Maximum allowed is ${MAX_CHARS} characters.`);
       return;
     }
 
     setLoading((l) => ({ ...l, spell: true }));
+
     try {
       const token = await getAccessToken();
       const res = await axios.post(
@@ -71,14 +83,15 @@ const Editor = () => {
       );
       setSpellCheckedText(res?.data?.correctedText || "");
     } catch (err) {
-      console.error("Spell check error:", err);
-      setError(err?.response?.data?.error || err?.message || "Spell check failed");
+      setError("Spell check failed.");
     } finally {
       setLoading((l) => ({ ...l, spell: false }));
     }
   };
 
+  // ------------------------------
   // GRAMMAR CHECK
+  // ------------------------------
   const checkGrammar = async () => {
     setError(null);
 
@@ -86,12 +99,14 @@ const Editor = () => {
       setError("Enter text to check grammar.");
       return;
     }
+
     if (text.length > MAX_CHARS) {
-      setError(`Input too long. Maximum ${MAX_CHARS} characters allowed.`);
+      setError(`Limit exceeded! Maximum allowed is ${MAX_CHARS} characters.`);
       return;
     }
 
     setLoading((l) => ({ ...l, grammar: true }));
+
     try {
       const token = await getAccessToken();
       const res = await axios.post(
@@ -106,56 +121,53 @@ const Editor = () => {
       );
       setGrammarCheckedText(res?.data?.correctedText || "");
     } catch (err) {
-      console.error("Grammar check error:", err);
-      setError(err?.response?.data?.error || err?.message || "Grammar check failed");
+      setError("Grammar check failed.");
     } finally {
       setLoading((l) => ({ ...l, grammar: false }));
     }
   };
+
+  const limitExceeded = text.length > MAX_CHARS;
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-100 min-h-screen">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
           <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-blue-600">AI Writing Assistant</h2>
-            <p className="mb-4 text-gray-600">Enhance your writing with our advanced AI tools.</p>
+            <h2 className="text-2xl font-bold mb-4 text-blue-600">
+              AI Writing Assistant
+            </h2>
+            <p className="mb-4 text-gray-600">
+              Enhance your writing with our advanced AI tools.
+            </p>
 
-            {/* TEXTAREA */}
             <textarea
               value={text}
               onChange={handleTextChange}
               placeholder="Type your text here..."
-              rows={5}
-              maxLength={MAX_CHARS + 1}
-              className={`w-full p-4 border rounded-lg resize-none focus:outline-none 
-                ${
-                  text.length > MAX_CHARS
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
+              rows={6}
+              className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
 
             {/* Character Counter */}
-            <div
-              className={`text-right text-sm mt-1 ${
-                text.length > MAX_CHARS ? "text-red-600" : "text-gray-500"
+            <p
+              className={`text-sm mt-1 ${
+                limitExceeded ? "text-red-500" : "text-gray-500"
               }`}
             >
               {text.length}/{MAX_CHARS} characters
-            </div>
+            </p>
 
-            {/* Error */}
-            {error && <div className="text-red-600 mb-3 font-semibold">{error}</div>}
+            {error && <div className="text-red-600 mt-2">{error}</div>}
 
-            {/* Buttons */}
             <div className="flex justify-end mt-4 space-x-4">
               <button
                 onClick={checkSpelling}
-                disabled={loading.spell || !text.trim() || text.length > MAX_CHARS}
+                disabled={loading.spell || limitExceeded}
                 className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold 
-                hover:bg-blue-700 transition duration-300 ${
-                  loading.spell || text.length > MAX_CHARS
+                hover:bg-blue-700 transition duration-300 
+                ${
+                  loading.spell || limitExceeded
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
@@ -165,10 +177,11 @@ const Editor = () => {
 
               <button
                 onClick={checkGrammar}
-                disabled={loading.grammar || !text.trim() || text.length > MAX_CHARS}
+                disabled={loading.grammar || limitExceeded}
                 className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold 
-                hover:bg-blue-700 transition duration-300 ${
-                  loading.grammar || text.length > MAX_CHARS
+                hover:bg-blue-700 transition duration-300 
+                ${
+                  loading.grammar || limitExceeded
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }`}
@@ -178,12 +191,13 @@ const Editor = () => {
             </div>
           </div>
 
-          {/* Results */}
+          {/* RESULTS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {spellCheckedText ? (
+            {spellCheckedText && (
               <div className="bg-white shadow-lg rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4 flex items-center">
-                  <FaSpellCheck className="mr-2 text-green-500" /> Spell Checked Text
+                  <FaSpellCheck className="mr-2 text-green-500" /> Spell Checked
+                  Text
                 </h3>
                 <p className="mb-4">{spellCheckedText}</p>
                 <button
@@ -193,12 +207,13 @@ const Editor = () => {
                   Accept
                 </button>
               </div>
-            ) : null}
+            )}
 
-            {grammarCheckedText ? (
+            {grammarCheckedText && (
               <div className="bg-white shadow-lg rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4 flex items-center">
-                  <SiGrammarly className="mr-2 text-blue-500" /> Grammar Checked Text
+                  <SiGrammarly className="mr-2 text-blue-500" /> Grammar Checked
+                  Text
                 </h3>
                 <p className="mb-4">{grammarCheckedText}</p>
                 <button
@@ -208,7 +223,7 @@ const Editor = () => {
                   Accept
                 </button>
               </div>
-            ) : null}
+            )}
           </div>
         </div>
 
@@ -218,7 +233,6 @@ const Editor = () => {
             <h3 className="text-xl font-semibold mb-4 flex items-center">
               <FaCheck className="mr-2 text-green-500" /> Corrected Sentences
             </h3>
-            <p className="mb-4 text-gray-600">Your approved corrections will appear here.</p>
 
             {correctedSentences.length > 0 ? (
               correctedSentences.map((sentence, index) => (
