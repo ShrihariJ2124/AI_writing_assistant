@@ -12,6 +12,7 @@ try {
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://ai-writing-assistant-2.onrender.com";
 
+// character limit
 const MAX_CHARS = 20;
 
 const Editor = () => {
@@ -25,11 +26,15 @@ const Editor = () => {
   const [loading, setLoading] = useState({ spell: false, grammar: false });
   const [error, setError] = useState(null);
 
-  // LIMIT INPUT TO MAX 20 CHARACTERS
+  // 🔴 Character limit validation
   const handleTextChange = (e) => {
     const value = e.target.value;
+
     if (value.length <= MAX_CHARS) {
       setText(value);
+      setError(null);
+    } else {
+      setError(`Maximum ${MAX_CHARS} characters allowed`);
     }
   };
 
@@ -38,14 +43,20 @@ const Editor = () => {
     setCorrectedSentences((prev) => [sentence, ...prev]);
   };
 
+  // SPELL CHECK
   const checkSpelling = async () => {
     setError(null);
+
     if (!text.trim()) {
       setError("Enter text to check spelling.");
       return;
     }
-    setLoading((l) => ({ ...l, spell: true }));
+    if (text.length > MAX_CHARS) {
+      setError(`Input too long. Maximum ${MAX_CHARS} characters allowed.`);
+      return;
+    }
 
+    setLoading((l) => ({ ...l, spell: true }));
     try {
       const token = await getAccessToken();
       const res = await axios.post(
@@ -56,7 +67,6 @@ const Editor = () => {
             Authorization: token ? `Bearer ${token}` : "",
             "Content-Type": "application/json",
           },
-          timeout: 60000,
         }
       );
       setSpellCheckedText(res?.data?.correctedText || "");
@@ -68,14 +78,20 @@ const Editor = () => {
     }
   };
 
+  // GRAMMAR CHECK
   const checkGrammar = async () => {
     setError(null);
+
     if (!text.trim()) {
       setError("Enter text to check grammar.");
       return;
     }
-    setLoading((l) => ({ ...l, grammar: true }));
+    if (text.length > MAX_CHARS) {
+      setError(`Input too long. Maximum ${MAX_CHARS} characters allowed.`);
+      return;
+    }
 
+    setLoading((l) => ({ ...l, grammar: true }));
     try {
       const token = await getAccessToken();
       const res = await axios.post(
@@ -86,7 +102,6 @@ const Editor = () => {
             Authorization: token ? `Bearer ${token}` : "",
             "Content-Type": "application/json",
           },
-          timeout: 60000,
         }
       );
       setGrammarCheckedText(res?.data?.correctedText || "");
@@ -101,41 +116,48 @@ const Editor = () => {
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-100 min-h-screen">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
-        {/* MAIN EDITOR */}
         <div className="md:col-span-2">
           <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
             <h2 className="text-2xl font-bold mb-4 text-blue-600">AI Writing Assistant</h2>
             <p className="mb-4 text-gray-600">Enhance your writing with our advanced AI tools.</p>
 
+            {/* TEXTAREA */}
             <textarea
               value={text}
               onChange={handleTextChange}
               placeholder="Type your text here..."
               rows={5}
-              maxLength={MAX_CHARS}
-              className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              maxLength={MAX_CHARS + 1}
+              className={`w-full p-4 border rounded-lg resize-none focus:outline-none 
+                ${
+                  text.length > MAX_CHARS
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
             />
 
             {/* Character Counter */}
-            <div className="text-right text-sm text-gray-500 mb-3">
+            <div
+              className={`text-right text-sm mt-1 ${
+                text.length > MAX_CHARS ? "text-red-600" : "text-gray-500"
+              }`}
+            >
               {text.length}/{MAX_CHARS} characters
             </div>
 
-            {/* Warning when full */}
-            {text.length === MAX_CHARS && (
-              <div className="text-yellow-600 mb-3">Maximum 20 characters reached.</div>
-            )}
-
-            {error && <div className="text-red-600 mb-3">{error}</div>}
+            {/* Error */}
+            {error && <div className="text-red-600 mb-3 font-semibold">{error}</div>}
 
             {/* Buttons */}
             <div className="flex justify-end mt-4 space-x-4">
               <button
                 onClick={checkSpelling}
-                disabled={loading.spell || !text.trim()}
-                className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition duration-300 ${
-                  loading.spell || !text.trim() ? "opacity-50 cursor-not-allowed" : ""
+                disabled={loading.spell || !text.trim() || text.length > MAX_CHARS}
+                className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold 
+                hover:bg-blue-700 transition duration-300 ${
+                  loading.spell || text.length > MAX_CHARS
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
               >
                 {loading.spell ? "Checking..." : "Check Spelling"}
@@ -143,9 +165,12 @@ const Editor = () => {
 
               <button
                 onClick={checkGrammar}
-                disabled={loading.grammar || !text.trim()}
-                className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition duration-300 ${
-                  loading.grammar || !text.trim() ? "opacity-50 cursor-not-allowed" : ""
+                disabled={loading.grammar || !text.trim() || text.length > MAX_CHARS}
+                className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold 
+                hover:bg-blue-700 transition duration-300 ${
+                  loading.grammar || text.length > MAX_CHARS
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
               >
                 {loading.grammar ? "Checking..." : "Check Grammar"}
@@ -153,9 +178,9 @@ const Editor = () => {
             </div>
           </div>
 
-          {/* Result Boxes */}
+          {/* Results */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {spellCheckedText && (
+            {spellCheckedText ? (
               <div className="bg-white shadow-lg rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4 flex items-center">
                   <FaSpellCheck className="mr-2 text-green-500" /> Spell Checked Text
@@ -168,9 +193,9 @@ const Editor = () => {
                   Accept
                 </button>
               </div>
-            )}
+            ) : null}
 
-            {grammarCheckedText && (
+            {grammarCheckedText ? (
               <div className="bg-white shadow-lg rounded-lg p-6">
                 <h3 className="text-xl font-semibold mb-4 flex items-center">
                   <SiGrammarly className="mr-2 text-blue-500" /> Grammar Checked Text
@@ -183,11 +208,11 @@ const Editor = () => {
                   Accept
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
-        {/* RIGHT SIDEBAR */}
+        {/* Corrected Sentences */}
         <div className="md:col-span-1">
           <div className="bg-white shadow-lg rounded-lg p-6 sticky top-8">
             <h3 className="text-xl font-semibold mb-4 flex items-center">
@@ -197,7 +222,10 @@ const Editor = () => {
 
             {correctedSentences.length > 0 ? (
               correctedSentences.map((sentence, index) => (
-                <div key={index} className="mb-2 pb-2 border-b border-gray-200 last:border-b-0">
+                <div
+                  key={index}
+                  className="mb-2 pb-2 border-b border-gray-200 last:border-b-0"
+                >
                   <p>{sentence}</p>
                 </div>
               ))
@@ -206,7 +234,6 @@ const Editor = () => {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
