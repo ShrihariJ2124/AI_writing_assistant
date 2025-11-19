@@ -10,7 +10,7 @@ try {
   usePrivy = null;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://ai-writing-assistant-2.onrender.com";
+const API_BASE = import.meta.env.VITE_API_URL || "https://ai-writing-assistant-2.onrender.com";
 
 
 const Editor = () => {

@@ -11,8 +11,10 @@ app.use(express.json());
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
+  "https://ai-writing-assistant-phi.vercel.app",
   process.env.FRONTEND_URL
 ];
+
 
 app.use(
   cors({
