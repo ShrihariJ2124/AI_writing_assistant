@@ -34,7 +34,7 @@ router.post("/", async (req, res) => {
     ];
 
     const data = await callGemini(undefined, contents, {
-      maxOutputTokens: 512,
+      maxOutputTokens: 720,
       temperature: 0.0,
       candidateCount: 1
     });
