@@ -12,6 +12,7 @@ try {
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://ai-writing-assistant-2.onrender.com";
 
+const MAX_CHARS = 20;
 
 const Editor = () => {
   const privy = usePrivy ? usePrivy() : null;
@@ -24,20 +25,27 @@ const Editor = () => {
   const [loading, setLoading] = useState({ spell: false, grammar: false });
   const [error, setError] = useState(null);
 
-  const handleTextChange = (e) => setText(e.target.value);
+  // LIMIT INPUT TO MAX 20 CHARACTERS
+  const handleTextChange = (e) => {
+    const value = e.target.value;
+    if (value.length <= MAX_CHARS) {
+      setText(value);
+    }
+  };
 
   const addCorrectedSentence = (sentence) => {
     if (!sentence) return;
-    setCorrectedSentences(prev => [sentence, ...prev]);
+    setCorrectedSentences((prev) => [sentence, ...prev]);
   };
 
   const checkSpelling = async () => {
     setError(null);
-    if (!text || !text.trim()) {
+    if (!text.trim()) {
       setError("Enter text to check spelling.");
       return;
     }
-    setLoading(l => ({ ...l, spell: true }));
+    setLoading((l) => ({ ...l, spell: true }));
+
     try {
       const token = await getAccessToken();
       const res = await axios.post(
@@ -46,8 +54,9 @@ const Editor = () => {
         {
           headers: {
             Authorization: token ? `Bearer ${token}` : "",
-            "Content-Type": "application/json"
-          }
+            "Content-Type": "application/json",
+          },
+          timeout: 60000,
         }
       );
       setSpellCheckedText(res?.data?.correctedText || "");
@@ -55,17 +64,18 @@ const Editor = () => {
       console.error("Spell check error:", err);
       setError(err?.response?.data?.error || err?.message || "Spell check failed");
     } finally {
-      setLoading(l => ({ ...l, spell: false }));
+      setLoading((l) => ({ ...l, spell: false }));
     }
   };
 
   const checkGrammar = async () => {
     setError(null);
-    if (!text || !text.trim()) {
+    if (!text.trim()) {
       setError("Enter text to check grammar.");
       return;
     }
-    setLoading(l => ({ ...l, grammar: true }));
+    setLoading((l) => ({ ...l, grammar: true }));
+
     try {
       const token = await getAccessToken();
       const res = await axios.post(
@@ -74,8 +84,9 @@ const Editor = () => {
         {
           headers: {
             Authorization: token ? `Bearer ${token}` : "",
-            "Content-Type": "application/json"
-          }
+            "Content-Type": "application/json",
+          },
+          timeout: 60000,
         }
       );
       setGrammarCheckedText(res?.data?.correctedText || "");
@@ -83,13 +94,15 @@ const Editor = () => {
       console.error("Grammar check error:", err);
       setError(err?.response?.data?.error || err?.message || "Grammar check failed");
     } finally {
-      setLoading(l => ({ ...l, grammar: false }));
+      setLoading((l) => ({ ...l, grammar: false }));
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 bg-gray-100 min-h-screen">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        {/* MAIN EDITOR */}
         <div className="md:col-span-2">
           <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
             <h2 className="text-2xl font-bold mb-4 text-blue-600">AI Writing Assistant</h2>
@@ -99,53 +112,87 @@ const Editor = () => {
               value={text}
               onChange={handleTextChange}
               placeholder="Type your text here..."
-              rows={10}
+              rows={5}
+              maxLength={MAX_CHARS}
               className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
 
+            {/* Character Counter */}
+            <div className="text-right text-sm text-gray-500 mb-3">
+              {text.length}/{MAX_CHARS} characters
+            </div>
+
+            {/* Warning when full */}
+            {text.length === MAX_CHARS && (
+              <div className="text-yellow-600 mb-3">Maximum 20 characters reached.</div>
+            )}
+
             {error && <div className="text-red-600 mb-3">{error}</div>}
 
+            {/* Buttons */}
             <div className="flex justify-end mt-4 space-x-4">
               <button
                 onClick={checkSpelling}
-                disabled={loading.spell}
-                className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition duration-300 ${loading.spell ? "opacity-50 cursor-not-allowed" : ""}`}
+                disabled={loading.spell || !text.trim()}
+                className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition duration-300 ${
+                  loading.spell || !text.trim() ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 {loading.spell ? "Checking..." : "Check Spelling"}
               </button>
 
               <button
                 onClick={checkGrammar}
-                disabled={loading.grammar}
-                className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition duration-300 ${loading.grammar ? "opacity-50 cursor-not-allowed" : ""}`}
+                disabled={loading.grammar || !text.trim()}
+                className={`bg-blue-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-blue-700 transition duration-300 ${
+                  loading.grammar || !text.trim() ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 {loading.grammar ? "Checking..." : "Check Grammar"}
               </button>
             </div>
           </div>
 
+          {/* Result Boxes */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {spellCheckedText ? (
+            {spellCheckedText && (
               <div className="bg-white shadow-lg rounded-lg p-6">
-                <h3 className="text-xl font-semibold mb-4 flex items-center"><FaSpellCheck className="mr-2 text-green-500" /> Spell Checked Text</h3>
+                <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <FaSpellCheck className="mr-2 text-green-500" /> Spell Checked Text
+                </h3>
                 <p className="mb-4">{spellCheckedText}</p>
-                <button onClick={() => addCorrectedSentence(spellCheckedText)} className="bg-blue-600 text-white px-4 py-2 rounded-full">Accept</button>
+                <button
+                  onClick={() => addCorrectedSentence(spellCheckedText)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-full"
+                >
+                  Accept
+                </button>
               </div>
-            ) : null}
+            )}
 
-            {grammarCheckedText ? (
+            {grammarCheckedText && (
               <div className="bg-white shadow-lg rounded-lg p-6">
-                <h3 className="text-xl font-semibold mb-4 flex items-center"><SiGrammarly className="mr-2 text-blue-500" /> Grammar Checked Text</h3>
+                <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <SiGrammarly className="mr-2 text-blue-500" /> Grammar Checked Text
+                </h3>
                 <p className="mb-4">{grammarCheckedText}</p>
-                <button onClick={() => addCorrectedSentence(grammarCheckedText)} className="bg-blue-600 text-white px-4 py-2 rounded-full">Accept</button>
+                <button
+                  onClick={() => addCorrectedSentence(grammarCheckedText)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-full"
+                >
+                  Accept
+                </button>
               </div>
-            ) : null}
+            )}
           </div>
         </div>
 
+        {/* RIGHT SIDEBAR */}
         <div className="md:col-span-1">
           <div className="bg-white shadow-lg rounded-lg p-6 sticky top-8">
-            <h3 className="text-xl font-semibold mb-4 flex items-center"><FaCheck className="mr-2 text-green-500" /> Corrected Sentences</h3>
+            <h3 className="text-xl font-semibold mb-4 flex items-center">
+              <FaCheck className="mr-2 text-green-500" /> Corrected Sentences
+            </h3>
             <p className="mb-4 text-gray-600">Your approved corrections will appear here.</p>
 
             {correctedSentences.length > 0 ? (
@@ -159,6 +206,7 @@ const Editor = () => {
             )}
           </div>
         </div>
+
       </div>
     </div>
   );
