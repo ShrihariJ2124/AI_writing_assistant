@@ -18,6 +18,7 @@ router.post("/", async (req, res) => {
 
     const contents = [
       {
+        role: "user",
         parts: [
           {
             text:
@@ -30,7 +31,7 @@ router.post("/", async (req, res) => {
     ];
 
     const data = await callGemini(undefined, contents, {
-      maxOutputTokens: 120,
+      maxOutputTokens: 256,
       temperature: 0.0,
       candidateCount: 1
     });
