@@ -9,9 +9,9 @@ const About = () => {
   const CTAButton = () => {
     if (!ready) {
       return (
-        <div className="inline-block bg-white text-blue-600 px-8 py-3 rounded-full font-bold text-lg">
+        <button className="bg-white text-blue-600 px-8 py-3 rounded-full font-bold text-lg opacity-60 cursor-not-allowed">
           Loading...
-        </div>
+        </button>
       );
     }
 
@@ -21,7 +21,7 @@ const About = () => {
           to="/write"
           className="bg-white text-blue-600 px-8 py-3 rounded-full font-bold text-lg hover:bg-blue-100 transition duration-300"
         >
-          Get Started Now
+          Go to Editor
         </Link>
       );
     }
@@ -43,29 +43,52 @@ const About = () => {
           About AI Writing Assistant
         </h1>
 
+        {/* Intro Section */}
         <div className="bg-white shadow-lg rounded-lg p-8 mb-12">
           <p className="text-xl text-gray-700 mb-6">
-            AI Writing Assistant is a cutting-edge tool designed to elevate your writing experience.
+            AI Writing Assistant is a modern tool built to enhance your writing
+            experience using cutting-edge AI.
           </p>
           <p className="text-xl text-gray-700">
-            Whether you're a student or a professional writer, our AI tools support you every step of the way.
+            Whether you are a student, professional, or content creator, our AI writing tools support you every step of the way.
           </p>
         </div>
 
+        {/* Features */}
         <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">
           Key Features
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          <FeatureCard icon={<FaPencilAlt className="text-blue-500" />} title="Grammar Correction" description="Advanced AI algorithms detect and correct grammatical errors." />
-          <FeatureCard icon={<FaMagic className="text-purple-500" />} title="Spell Check" description="Catch typos and maintain the integrity of your text." />
-          <FeatureCard icon={<FaRobot className="text-green-500" />} title="Style Suggestions" description="Improve clarity, tone, and readability." />
-          <FeatureCard icon={<FaChartLine className="text-red-500" />} title="Analytics" description="Track improvements over time." />
+          <FeatureCard
+            icon={<FaPencilAlt className="text-blue-500" />}
+            title="Grammar Correction"
+            description="Fix mistakes instantly using advanced grammar correction AI."
+          />
+          <FeatureCard
+            icon={<FaMagic className="text-purple-500" />}
+            title="Spell Check"
+            description="Detect and correct spelling errors with smart suggestions."
+          />
+          <FeatureCard
+            icon={<FaRobot className="text-green-500" />}
+            title="Style Suggestions"
+            description="Improve tone, clarity, and writing flow."
+          />
+          <FeatureCard
+            icon={<FaChartLine className="text-red-500" />}
+            title="Writing Analytics"
+            description="Track your writing improvements over time."
+          />
         </div>
 
+        {/* CTA Section */}
         <div className="bg-blue-600 text-white rounded-lg p-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Writing?</h2>
+          <h2 className="text-3xl font-bold mb-4">
+            Ready to Transform Your Writing?
+          </h2>
           <p className="text-xl mb-6">Join thousands of satisfied users.</p>
+
           <CTAButton />
         </div>
       </div>
